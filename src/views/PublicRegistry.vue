@@ -58,33 +58,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { fetchOfficers, subscribeToOfficers } from '../supabase'
+import { ref, computed, onMounted } from 'vue'
+import { supabase } from '../supabase'
 
 const searchQuery = ref('')
 const officers = ref([])
 
-onMounted(async () => {
-  officers.value = await fetchOfficers()
-  const sub = subscribeToOfficers((payload) => {
-    if (payload.eventType === 'INSERT') {
-      officers.value.unshift(payload.new)
-    } else if (payload.eventType === 'UPDATE') {
-      const index = officers.value.findIndex(o => o.id === payload.new.id)
-      if (index !== -1) officers.value[index] = payload.new
-    } else if (payload.eventType === 'DELETE') {
-      officers.value = officers.value.filter(o => o.id !== payload.old.id)
-    }
-  })
-  onUnmounted(() => sub.unsubscribe())
-})
+const loadData = async () => {
+  const { data, error } = await supabase.from('officers').select('*').order('createdAt', { ascending: false })
+  if (!error) officers.value = data
+}
+
+onMounted(loadData)
 
 const filteredOfficers = computed(() => {
   if (!searchQuery.value) return officers.value
   const q = searchQuery.value.toLowerCase()
-  return officers.value.filter(o =>
-    o.firstName.toLowerCase().includes(q) ||
-    o.lastName.toLowerCase().includes(q) ||
+  return officers.value.filter(o => 
+    o.firstName.toLowerCase().includes(q) || 
+    o.lastName.toLowerCase().includes(q) || 
     o.idCard.includes(q)
   )
 })
