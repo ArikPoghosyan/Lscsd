@@ -59,7 +59,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { fetchOfficers, subscribeToOfficers } from '../services/supabase'
+import { fetchOfficers, subscribeToOfficers } from '../supabase'
 
 const searchQuery = ref('')
 const officers = ref([])
