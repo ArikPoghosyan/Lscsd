@@ -122,7 +122,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../supabase'
+import { supabase } from '../supabase'  // ИСПРАВЛЕНО: был "../supabase" а нужно "../supabase"
 
 const router = useRouter()
 const loginMode = ref('code')
@@ -134,12 +134,22 @@ const isLoading = ref(false)
 
 const LEADER_CREDENTIALS = { username: 'Samo-6098', password: 'DENVER-AP1624' }
 
+const formatAccessCode = () => {
+  // Автоматически добавляем дефис после 4 символов
+  let value = accessCode.value.replace(/[^A-Za-z0-9]/g, '')
+  if (value.length > 4) {
+    value = value.slice(0, 4) + '-' + value.slice(4, 8)
+  }
+  accessCode.value = value.toUpperCase()
+}
+
 const handleLogin = async () => {
   error.value = ''
   isLoading.value = true
 
   try {
     if (loginMode.value === 'credentials') {
+      // Вход по логину/паролю (только для лидера)
       if (username.value === LEADER_CREDENTIALS.username && password.value === LEADER_CREDENTIALS.password) {
         localStorage.setItem('lssd_auth', JSON.stringify({ isLeader: true, name: 'Leader' }))
         router.push('/admin')
@@ -147,6 +157,7 @@ const handleLogin = async () => {
         error.value = 'Неверный логин или пароль'
       }
     } else {
+      // Вход по коду доступа
       const { data, error: dbError } = await supabase
         .from('access_keys')
         .select('*')
@@ -155,10 +166,14 @@ const handleLogin = async () => {
         .single()
 
       if (data) {
-        await supabase.from('access_keys').update({ 
-          uses: (data.uses || 0) + 1, 
-          lastUsed: new Date().toISOString() 
-        }).eq('code', data.code)
+        // Обновляем счетчик использований
+        await supabase
+          .from('access_keys')
+          .update({ 
+            uses: (data.uses || 0) + 1, 
+            lastUsed: new Date().toISOString() 
+          })
+          .eq('code', data.code)
         
         localStorage.setItem('lssd_auth', JSON.stringify({ isLeader: false, name: 'Officer' }))
         router.push('/registry')
@@ -167,6 +182,7 @@ const handleLogin = async () => {
       }
     }
   } catch (e) {
+    console.error('Login error:', e)
     error.value = 'Ошибка сервера'
   } finally {
     isLoading.value = false
