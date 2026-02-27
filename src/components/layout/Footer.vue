@@ -3,12 +3,10 @@
     <div class="footer__grid" aria-hidden="true"></div>
     
     <div class="footer__container">
-      <!-- Main footer content -->
       <div class="footer__main">
-        <!-- Logo and info -->
         <div class="footer__info">
           <div class="footer__logo">
-            <img src="/src/assets/lssd-logo.png" alt="LSSD" class="footer__logo-img" />
+            <img src="/lssd-logo.png" alt="LSSD" class="footer__logo-img" />
             <div class="footer__logo-glow"></div>
           </div>
           <div class="footer__text">
@@ -18,7 +16,6 @@
           </div>
         </div>
 
-        <!-- Quick links -->
         <div class="footer__links">
           <div class="footer__links-column">
             <h4 class="footer__links-title">Навигация</h4>
@@ -40,7 +37,6 @@
         </div>
       </div>
 
-      <!-- Copyright and credits -->
       <div class="footer__bottom">
         <div class="footer__copyright">
           © {{ currentYear }} Los Santos County Sheriff's Department. All rights reserved.
@@ -52,14 +48,11 @@
       </div>
     </div>
 
-    <!-- Scanlines overlay -->
     <div class="footer__scanlines" aria-hidden="true"></div>
   </footer>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
 const currentYear = new Date().getFullYear()
 
 const scrollToDepts = () => {
@@ -79,7 +72,6 @@ const scrollToDepts = () => {
   --gold-dim: #8b7340;
   --navy: #080f16;
   --navy-mid: #0e1a24;
-  --navy-light: #152130;
   --navy-card: #111d28;
   --white: #f0ede8;
   --muted: rgba(240,237,232,0.55);
@@ -141,7 +133,6 @@ const scrollToDepts = () => {
   border-bottom: 1px solid var(--border);
 }
 
-/* Logo section */
 .footer__info {
   display: flex;
   align-items: center;
@@ -203,10 +194,9 @@ const scrollToDepts = () => {
   letter-spacing: 0.5px;
 }
 
-/* Links section */
 .footer__links {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 30px;
 }
 
@@ -243,7 +233,6 @@ const scrollToDepts = () => {
   letter-spacing: 0.5px;
   transition: all 0.2s ease;
   padding: 4px 0;
-  position: relative;
   display: flex;
   flex-direction: column;
 }
@@ -262,17 +251,6 @@ const scrollToDepts = () => {
   transform: translateX(5px);
 }
 
-.footer__link-desc {
-  font-size: 0.7rem;
-  color: var(--muted);
-  opacity: 0.7;
-}
-
-.footer__link:hover .footer__link-desc {
-  color: var(--gold-light);
-}
-
-/* Bottom section */
 .footer__bottom {
   display: flex;
   justify-content: space-between;
@@ -282,10 +260,7 @@ const scrollToDepts = () => {
   font-size: 0.85rem;
 }
 
-.footer__copyright {
-  color: var(--muted);
-  letter-spacing: 0.5px;
-}
+.footer__copyright { color: var(--muted); letter-spacing: 0.5px; }
 
 .footer__credits {
   display: flex;
@@ -303,9 +278,7 @@ const scrollToDepts = () => {
   background: rgba(198,167,86,0.1);
 }
 
-.footer__credits-text {
-  color: var(--muted);
-}
+.footer__credits-text { color: var(--muted); }
 
 .footer__credits-name {
   color: var(--gold);
@@ -313,52 +286,17 @@ const scrollToDepts = () => {
   letter-spacing: 1px;
 }
 
-.footer__credits-badge {
-  color: var(--gold);
-  font-size: 0.9rem;
-  margin-left: 4px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
-  .footer__main {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  
-  .footer__info {
-    justify-content: center;
-  }
+  .footer__main { grid-template-columns: 1fr; gap: 40px; }
+  .footer__info { justify-content: center; }
 }
 
 @media (max-width: 768px) {
-  .footer__links {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-  
-  .footer__bottom {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
+  .footer__links { grid-template-columns: 1fr; gap: 30px; }
+  .footer__bottom { flex-direction: column; gap: 15px; text-align: center; }
 }
 
 @media (max-width: 480px) {
-  .footer__info {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .footer__title::after {
-    left: 50%;
-    transform: translateX(-50%);
-  }
+  .footer__info { flex-direction: column; text-align: center; }
 }
 </style>

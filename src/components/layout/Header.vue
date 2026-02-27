@@ -11,7 +11,7 @@
       <!-- Logo -->
       <router-link to="/" class="logo" @click="menuOpen = false">
         <div class="logo__badge-wrap">
-          <img src="/src/assets/lssd-logo.png" alt="LSSD Badge" class="logo__img" />
+          <img src="/lssd-logo.png" alt="LSSD Badge" class="logo__img" />
           <div class="logo__glow"></div>
         </div>
         <div class="logo__text">
@@ -23,7 +23,6 @@
 
       <!-- Desktop Nav -->
       <!-- Desktop Nav -->
-<!-- Desktop Nav -->
 <nav class="nav" aria-label="Main navigation">
   <router-link to="/" class="nav__link" exact-active-class="nav__link--active">
     <span class="nav__link-inner">Главная</span>
@@ -39,11 +38,6 @@
   
   <router-link to="/public-registry" class="nav__link" active-class="nav__link--active">
     <span class="nav__link-inner">Реестр Пропусков</span>
-  </router-link>
-  
-  <!-- Управление пропусками - ТОЛЬКО ДЛЯ АВТОРИЗОВАННЫХ -->
-  <router-link v-if="isAuthenticated" to="/registry" class="nav__link" active-class="nav__link--active">
-    <span class="nav__link-inner">Управление пропусками</span>
   </router-link>
   
   <!-- Админ панель - только для лидера -->
