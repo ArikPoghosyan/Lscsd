@@ -1,7 +1,7 @@
 <template>
   <div class="admin">
     <div class="admin__grid" aria-hidden="true"></div>
-
+    
     <div class="admin__container">
       <!-- Header -->
       <div class="admin__header">
@@ -17,7 +17,7 @@
           <button @click="handleLogout" class="admin__logout">
             <span>Выйти</span>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 1L13 5M13 5L9 9M13 5H5M1 13V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M9 1L13 5M13 5L9 9M13 5H5M1 13V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
@@ -41,11 +41,20 @@
 
       <!-- Tabs -->
       <div class="admin__tabs">
-        <button class="admin__tab" :class="{ 'admin__tab--active': activeTab === 'registry' }" @click="activeTab = 'registry'">
+        <button 
+          class="admin__tab" 
+          :class="{ 'admin__tab--active': activeTab === 'registry' }"
+          @click="activeTab = 'registry'"
+        >
           <span class="admin__tab-icon">📋</span>
           Реестр пропусков
         </button>
-        <button v-if="isLeader" class="admin__tab" :class="{ 'admin__tab--active': activeTab === 'keys' }" @click="activeTab = 'keys'">
+        <button 
+          v-if="isLeader"
+          class="admin__tab" 
+          :class="{ 'admin__tab--active': activeTab === 'keys' }"
+          @click="activeTab = 'keys'"
+        >
           <span class="admin__tab-icon">🔑</span>
           Ключи доступа
         </button>
@@ -59,7 +68,12 @@
             Оформить новый пропуск
           </button>
           <div class="admin__search">
-            <input type="text" v-model="searchQuery" placeholder="Поиск по имени, фамилии или ID карты..." class="admin__search-input" />
+            <input 
+              type="text" 
+              v-model="searchQuery" 
+              placeholder="Поиск по имени, фамилии или ID карты..."
+              class="admin__search-input"
+            />
           </div>
         </div>
 
@@ -77,7 +91,9 @@
             </thead>
             <tbody>
               <tr v-if="filteredOfficers.length === 0">
-                <td colspan="5" style="text-align: center; color: var(--muted); padding: 60px;">Нет записей в реестре</td>
+                <td colspan="5" style="text-align: center; color: var(--muted); padding: 60px;">
+                  Нет записей в реестре
+                </td>
               </tr>
               <tr v-for="officer in filteredOfficers" :key="officer.id">
                 <td>{{ officer.firstName }}</td>
@@ -138,7 +154,9 @@
             </thead>
             <tbody>
               <tr v-if="accessKeys.length === 0">
-                <td colspan="6" style="text-align: center; color: var(--muted); padding: 60px;">Нет сгенерированных ключей</td>
+                <td colspan="6" style="text-align: center; color: var(--muted); padding: 60px;">
+                  Нет сгенерированных ключей
+                </td>
               </tr>
               <tr v-for="key in accessKeys" :key="key.code">
                 <td class="admin__key-code">{{ key.code }}</td>
@@ -155,7 +173,11 @@
                 <td>
                   <div class="admin__actions">
                     <button class="admin__action-btn" @click="copyKey(key.code)" title="Копировать">📋</button>
-                    <button class="admin__action-btn" @click="toggleKeyStatus(key)" :title="key.active ? 'Деактивировать' : 'Активировать'">
+                    <button 
+                      class="admin__action-btn" 
+                      @click="toggleKeyStatus(key)" 
+                      :title="key.active ? 'Деактивировать' : 'Активировать'"
+                    >
                       {{ key.active ? '🔴' : '🟢' }}
                     </button>
                     <button class="admin__action-btn" @click="deleteKey(key)" title="Удалить навсегда">🗑️</button>
@@ -202,8 +224,12 @@
               </label>
             </div>
             <div class="admin__modal-actions">
-              <button type="button" class="admin__btn admin__btn--secondary" @click="showAddOfficerModal = false">Отмена</button>
-              <button type="submit" class="admin__btn admin__btn--primary">{{ editingOfficer ? 'Сохранить' : 'Оформить' }}</button>
+              <button type="button" class="admin__btn admin__btn--secondary" @click="showAddOfficerModal = false">
+                Отмена
+              </button>
+              <button type="submit" class="admin__btn admin__btn--primary">
+                {{ editingOfficer ? 'Сохранить' : 'Оформить' }}
+              </button>
             </div>
           </form>
         </div>
@@ -230,7 +256,9 @@
             </div>
 
             <div class="admin__modal-actions">
-              <button type="button" class="admin__btn admin__btn--secondary" @click="showGenerateKeyModal = false">Закрыть</button>
+              <button type="button" class="admin__btn admin__btn--secondary" @click="showGenerateKeyModal = false">
+                Закрыть
+              </button>
               <button type="submit" class="admin__btn admin__btn--primary" :disabled="isGenerating">
                 {{ isGenerating ? 'Генерация...' : 'Сгенерировать' }}
               </button>
@@ -245,18 +273,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  fetchOfficers,
-  createOfficer,
-  updateOfficer,
-  deleteOfficer as deleteOfficerApi,
-  fetchKeys,
-  createKey,
-  updateKey,
-  deleteKey as deleteKeyApi,
-  subscribeToOfficers,
-  subscribeToKeys
-} from '../services/supabase'
+import { supabase } from '../supabase'
 
 const router = useRouter()
 const activeTab = ref('registry')
@@ -268,54 +285,31 @@ const isGenerating = ref(false)
 const generatedKey = ref('')
 const isLeader = ref(false)
 
-const stats = ref({ totalOfficers: 0, activeOfficers: 0, activeKeys: 0 })
+const stats = ref({
+  totalOfficers: 0,
+  activeOfficers: 0,
+  activeKeys: 0
+})
+
+const officerForm = ref({
+  firstName: '',
+  lastName: '',
+  idCard: '',
+  status: 'ACTIVE'
+})
+
 const officers = ref([])
 const accessKeys = ref([])
 
-const officerForm = ref({ firstName: '', lastName: '', idCard: '', status: 'ACTIVE' })
-
-// Загрузка данных и подписки
-onMounted(async () => {
-  checkAuth()
-
-  try {
-    officers.value = await fetchOfficers()
-    accessKeys.value = await fetchKeys()
-    updateStats()
-
-    // Подписка на изменения
-    const officersSub = subscribeToOfficers((payload) => {
-      if (payload.eventType === 'INSERT') {
-        officers.value.unshift(payload.new)
-      } else if (payload.eventType === 'UPDATE') {
-        const index = officers.value.findIndex(o => o.id === payload.new.id)
-        if (index !== -1) officers.value[index] = payload.new
-      } else if (payload.eventType === 'DELETE') {
-        officers.value = officers.value.filter(o => o.id !== payload.old.id)
-      }
-      updateStats()
-    })
-
-    const keysSub = subscribeToKeys((payload) => {
-      if (payload.eventType === 'INSERT') {
-        accessKeys.value.unshift(payload.new)
-      } else if (payload.eventType === 'UPDATE') {
-        const index = accessKeys.value.findIndex(k => k.code === payload.new.code)
-        if (index !== -1) accessKeys.value[index] = payload.new
-      } else if (payload.eventType === 'DELETE') {
-        accessKeys.value = accessKeys.value.filter(k => k.code !== payload.old.code)
-      }
-      updateStats()
-    })
-
-    onUnmounted(() => {
-      officersSub.unsubscribe()
-      keysSub.unsubscribe()
-    })
-  } catch (err) {
-    console.error('Failed to load data:', err)
+const checkAuth = () => {
+  const auth = localStorage.getItem('lssd_auth')
+  if (!auth) {
+    router.push('/login')
+    return
   }
-})
+  const user = JSON.parse(auth)
+  isLeader.value = user.isLeader || false
+}
 
 const updateStats = () => {
   stats.value = {
@@ -325,45 +319,59 @@ const updateStats = () => {
   }
 }
 
+const loadOfficers = async () => {
+  const { data } = await supabase.from('officers').select('*').order('createdAt', { ascending: false })
+  officers.value = data || []
+  updateStats()
+}
+
+const loadKeys = async () => {
+  if (!isLeader.value) return
+  const { data } = await supabase.from('access_keys').select('*').order('createdAt', { ascending: false })
+  accessKeys.value = data || []
+  updateStats()
+}
+
+onMounted(async () => {
+  checkAuth()
+  await loadOfficers()
+  await loadKeys()
+})
+
 const filteredOfficers = computed(() => {
   if (!searchQuery.value) return officers.value
-  const q = searchQuery.value.toLowerCase()
+  const query = searchQuery.value.toLowerCase()
   return officers.value.filter(o =>
-    o.firstName.toLowerCase().includes(q) ||
-    o.lastName.toLowerCase().includes(q) ||
-    (o.idCard && o.idCard.toLowerCase().includes(q))
+    o.firstName.toLowerCase().includes(query) ||
+    o.lastName.toLowerCase().includes(query) ||
+    (o.idCard && o.idCard.toLowerCase().includes(query))
   )
 })
 
 const formatDate = (date) => new Date(date).toLocaleDateString('ru-RU')
+
 const formatDateTime = (date) => new Date(date).toLocaleString('ru-RU', {
-  day: '2-digit', month: '2-digit', year: 'numeric',
-  hour: '2-digit', minute: '2-digit'
+  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
 })
 
-const copyKey = (key) => {
-  navigator.clipboard.writeText(key)
-  alert('Ключ скопирован в буфер обмена')
-}
-
-// CRUD для сотрудников
 const saveOfficer = async () => {
-  try {
-    if (!officerForm.value.idCard) {
-      officerForm.value.idCard = Math.floor(100000 + Math.random() * 900000).toString()
-    }
-
-    if (editingOfficer.value) {
-      await updateOfficer(editingOfficer.value.id, officerForm.value)
-    } else {
-      await createOfficer(officerForm.value)
-    }
-
-    showAddOfficerModal.value = false
-    resetOfficerForm()
-  } catch (err) {
-    alert('Ошибка сохранения: ' + err.message)
+  if (!officerForm.value.idCard) {
+    officerForm.value.idCard = Math.floor(100000 + Math.random() * 900000).toString()
   }
+
+  if (editingOfficer.value) {
+    await supabase.from('officers').update(officerForm.value).eq('id', editingOfficer.value.id)
+  } else {
+    const newOfficer = {
+      ...officerForm.value,
+      createdAt: new Date().toISOString()
+    }
+    await supabase.from('officers').insert([newOfficer])
+  }
+
+  showAddOfficerModal.value = false
+  resetOfficerForm()
+  await loadOfficers()
 }
 
 const editOfficer = (officer) => {
@@ -374,30 +382,18 @@ const editOfficer = (officer) => {
 
 const toggleStatus = async (officer) => {
   const newStatus = officer.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
-  try {
-    await updateOfficer(officer.id, { status: newStatus })
-  } catch (err) {
-    alert('Ошибка изменения статуса')
-  }
+  await supabase.from('officers').update({ status: newStatus }).eq('id', officer.id)
+  await loadOfficers()
 }
 
 const deleteOfficer = async (id) => {
   if (confirm('Удалить этот пропуск из реестра?')) {
-    try {
-      await deleteOfficerApi(id)
-    } catch (err) {
-      alert('Ошибка удаления')
-    }
+    await supabase.from('officers').delete().eq('id', id)
+    await loadOfficers()
   }
 }
 
-const resetOfficerForm = () => {
-  officerForm.value = { firstName: '', lastName: '', idCard: '', status: 'ACTIVE' }
-  editingOfficer.value = null
-}
-
-// Генерация ключа (только лидер)
-const generateKey = async () => {
+const generateKey = () => {
   if (!isLeader.value) return
   isGenerating.value = true
 
@@ -418,50 +414,585 @@ const generateKey = async () => {
       lastUsed: null
     }
 
-    try {
-      await createKey(newKey)
-    } catch (err) {
-      alert('Ошибка генерации ключа')
-    } finally {
-      isGenerating.value = false
-    }
+    await supabase.from('access_keys').insert([newKey])
+    await loadKeys()
+    isGenerating.value = false
   }, 500)
 }
 
 const toggleKeyStatus = async (key) => {
-  try {
-    await updateKey(key.code, { active: !key.active })
-  } catch (err) {
-    alert('Ошибка изменения статуса ключа')
-  }
+  await supabase.from('access_keys').update({ active: !key.active }).eq('code', key.code)
+  await loadKeys()
 }
 
 const deleteKey = async (key) => {
   if (confirm(`Удалить ключ ${key.code} навсегда?`)) {
-    try {
-      await deleteKeyApi(key.code)
-    } catch (err) {
-      alert('Ошибка удаления ключа')
-    }
+    await supabase.from('access_keys').delete().eq('code', key.code)
+    await loadKeys()
   }
 }
 
-const checkAuth = () => {
-  const auth = localStorage.getItem('lssd_auth')
-  if (auth) {
-    const user = JSON.parse(auth)
-    isLeader.value = user.isLeader || false
-  } else {
-    router.push('/login')
-  }
+const copyKey = (key) => {
+  navigator.clipboard.writeText(key)
+  alert('Ключ скопирован в буфер обмена')
 }
 
 const handleLogout = () => {
   localStorage.removeItem('lssd_auth')
   router.push('/login')
 }
+
+const resetOfficerForm = () => {
+  officerForm.value = { firstName: '', lastName: '', idCard: '', status: 'ACTIVE' }
+  editingOfficer.value = null
+}
 </script>
 
 <style scoped>
-/* Стили остаются без изменений — они уже есть в вашем оригинале */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+.admin {
+  min-height: calc(100vh - 120px);
+  background: var(--navy);
+  font-family: 'Rajdhani', sans-serif;
+  position: relative;
+  padding: 40px 20px;
+}
+
+.admin__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(198,167,86,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(198,167,86,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridShift 20s linear infinite;
+}
+
+@keyframes gridShift {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
+}
+
+.admin__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.admin__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(198,167,86,0.2);
+}
+
+.admin__title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  color: var(--white);
+  margin: 0;
+  letter-spacing: 3px;
+}
+
+.admin__subtitle {
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 5px 0 0;
+}
+
+.admin__header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.admin__leader-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(198,167,86,0.1);
+  border: 1px solid rgba(198,167,86,0.3);
+  border-radius: 4px;
+  color: var(--gold);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.admin__leader-badge--user {
+  border-color: rgba(110, 232, 154, 0.3);
+  color: #6ee89a;
+  background: rgba(110, 232, 154, 0.1);
+}
+
+.admin__logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin__logout:hover {
+  border-color: var(--gold);
+  color: var(--white);
+}
+
+.admin__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.admin__stat {
+  background: var(--navy-card);
+  border: 1px solid rgba(198,167,86,0.15);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.admin__stat:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.admin__stat-value {
+  display: block;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.admin__stat-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin__tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(198,167,86,0.15);
+  padding-bottom: 10px;
+}
+
+.admin__tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.admin__tab--active { color: var(--gold); }
+
+.admin__tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: -11px;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.admin__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.admin__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin__btn--primary {
+  background: linear-gradient(135deg, var(--gold), #a8883e);
+  color: var(--navy);
+}
+
+.admin__btn--primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(198,167,86,0.3);
+}
+
+.admin__btn--primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.admin__btn--secondary {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(198,167,86,0.2);
+  color: var(--white);
+}
+
+.admin__btn--secondary:hover { border-color: var(--gold); }
+
+.admin__search { flex: 1; max-width: 400px; }
+
+.admin__search-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 4px;
+  color: var(--white);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+}
+
+.admin__search-input:focus { outline: none; border-color: var(--gold); }
+
+.admin__table-container {
+  background: var(--navy-card);
+  border: 1px solid rgba(198,167,86,0.15);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.admin__table { width: 100%; border-collapse: collapse; }
+
+.admin__key-stats { display: flex; align-items: center; }
+
+.admin__key-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(198,167,86,0.1);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin__key-stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin-right: 5px;
+}
+
+.admin__key-uses { text-align: center; }
+
+.admin__uses-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(198,167,86,0.1);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 12px;
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.85rem;
+  min-width: 30px;
+  text-align: center;
+}
+
+.admin__table th {
+  text-align: left;
+  padding: 16px;
+  background: rgba(0,0,0,0.3);
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(198,167,86,0.2);
+}
+
+.admin__table td {
+  padding: 16px;
+  color: var(--white);
+  border-bottom: 1px solid rgba(198,167,86,0.1);
+}
+
+.admin__table tr:last-child td { border-bottom: none; }
+.admin__table tr:hover td { background: rgba(198,167,86,0.05); }
+
+.admin__id-card {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: monospace;
+  font-size: 0.95rem;
+}
+
+.admin__id-prefix { color: var(--gold); font-weight: 600; }
+
+.admin__id-number {
+  color: var(--white);
+  letter-spacing: 1px;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(198,167,86,0.2);
+}
+
+.admin__status {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin__status--active {
+  background: rgba(110, 232, 154, 0.15);
+  border: 1px solid rgba(110, 232, 154, 0.3);
+  color: #6ee89a;
+}
+
+.admin__status--inactive {
+  background: rgba(224, 79, 79, 0.15);
+  border: 1px solid rgba(224, 79, 79, 0.3);
+  color: #e04f4f;
+}
+
+.admin__actions { display: flex; gap: 8px; }
+
+.admin__action-btn {
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.admin__action-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(198,167,86,0.1);
+}
+
+.admin__key-code {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 1px;
+  font-size: 0.95rem;
+}
+
+.admin__modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.admin__modal {
+  width: 500px;
+  max-width: 90vw;
+  background: var(--navy-mid);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.admin__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(198,167,86,0.2);
+}
+
+.admin__modal-header h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.admin__modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.admin__modal-close:hover { color: var(--gold); }
+.admin__modal-form { padding: 20px; }
+.admin__modal-note { color: var(--muted); margin-bottom: 20px; font-style: italic; }
+
+.admin__form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin__form-field { display: flex; flex-direction: column; gap: 8px; }
+
+.admin__form-field span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.admin__form-input,
+.admin__form-select {
+  padding: 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 4px;
+  color: var(--white);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+}
+
+.admin__form-input:focus,
+.admin__form-select:focus { outline: none; border-color: var(--gold); }
+
+.admin__id-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.admin__id-prefix-input {
+  padding: 10px 12px;
+  background: rgba(198,167,86,0.1);
+  color: var(--gold);
+  font-weight: 600;
+  border-right: 1px solid rgba(198,167,86,0.2);
+  font-family: monospace;
+}
+
+.admin__id-input {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-family: monospace;
+  font-size: 1rem;
+}
+
+.admin__id-input:focus { outline: none; }
+
+.admin__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.admin__generated-key {
+  margin: 20px 0;
+  padding: 16px;
+  background: rgba(198,167,86,0.1);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+}
+
+.admin__key-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.admin__key-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin__key-display code {
+  font-family: monospace;
+  font-size: 1.2rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+  background: rgba(0,0,0,0.3);
+  padding: 8px 12px;
+  border-radius: 4px;
+  flex: 1;
+}
+
+.admin__key-copy {
+  padding: 8px 16px;
+  background: var(--gold);
+  border: none;
+  border-radius: 4px;
+  color: var(--navy);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin__key-copy:hover { transform: translateY(-1px); }
+
+.modal-enter-active,
+.modal-leave-active { transition: opacity 0.3s ease; }
+.modal-enter-from,
+.modal-leave-to { opacity: 0; }
+
+@media (max-width: 1024px) {
+  .admin__stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .admin__header { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .admin__toolbar { flex-direction: column; align-items: stretch; }
+  .admin__search { max-width: 100%; }
+  .admin__form-grid { grid-template-columns: 1fr; }
+}
 </style>
