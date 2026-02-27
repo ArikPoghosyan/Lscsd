@@ -1,73 +1,102 @@
 <template>
   <div class="registry">
     <div class="registry__grid" aria-hidden="true"></div>
-    
+
     <div class="registry__container">
+
       <!-- Header -->
       <div class="registry__header">
-        <h1 class="registry__title">Управление пропусками</h1>
-        <p class="registry__subtitle">Los Santos County Sheriff's Department</p>
-        <div class="registry__badge">
-          <span class="registry__badge-icon">⬢</span>
-          <span>Режим редактирования</span>
+        <div class="registry__header-left">
+          <p class="registry__eyebrow">Los Santos County Sheriff's Department</p>
+          <h1 class="registry__title">Реестр Пропусков</h1>
+        </div>
+        <div class="registry__header-right">
+          <span class="registry__status-badge">
+            <span class="registry__status-dot"></span>
+            Режим редактирования
+          </span>
         </div>
       </div>
 
       <!-- Toolbar -->
       <div class="registry__toolbar">
-        <button class="registry__btn registry__btn--primary" @click="showAddOfficerModal = true">
-          <span>➕</span>
-          Оформить новый пропуск
+        <button class="registry__btn registry__btn--primary" @click="openAddModal">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Оформить пропуск
         </button>
         <div class="registry__search">
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="Поиск по имени, фамилии или ID карты..."
+          <svg class="registry__search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Поиск по имени, фамилии или ID..."
             class="registry__search-input"
           />
+          <button v-if="searchQuery" class="registry__search-clear" @click="searchQuery = ''">×</button>
+        </div>
+        <div class="registry__count">
+          <span class="registry__count-num">{{ filteredOfficers.length }}</span>
+          <span class="registry__count-label">записей</span>
         </div>
       </div>
 
-      <!-- Officers Table -->
-      <div class="registry__table-container">
+      <!-- Table -->
+      <div class="registry__table-wrap">
         <table class="registry__table">
           <thead>
             <tr>
+              <th>#</th>
               <th>Имя</th>
               <th>Фамилия</th>
-              <th>ID карта</th>
-              <th>Статус доступа</th>
+              <th>ID Пропуска</th>
+              <th>Статус</th>
               <th>Действия</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="filteredOfficers.length === 0">
-              <td colspan="5" style="text-align: center; color: var(--muted); padding: 60px;">
-                Нет записей в реестре
-              </td>
-            </tr>
-            <tr v-for="officer in filteredOfficers" :key="officer.id">
-              <td>{{ officer.firstName }}</td>
-              <td>{{ officer.lastName }}</td>
-              <td>
-                <div class="registry__id-card">
-                  <span class="registry__id-prefix">LSSD-</span>
-                  <span class="registry__id-number">{{ officer.idCard }}</span>
+              <td colspan="6" class="registry__empty">
+                <div class="registry__empty-inner">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" opacity=".3"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <p>Записей не найдено</p>
                 </div>
               </td>
+            </tr>
+            <tr v-for="(officer, idx) in filteredOfficers" :key="officer.id" class="registry__row">
+              <td class="registry__td-idx">{{ idx + 1 }}</td>
+              <td class="registry__td-name">{{ officer.firstName }}</td>
+              <td class="registry__td-name">{{ officer.lastName }}</td>
               <td>
-                <span class="registry__status" :class="`registry__status--${officer.status.toLowerCase()}`">
-                  {{ officer.status === 'ACTIVE' ? 'ДОСТУП РАЗРЕШЕН' : 'ДОСТУП ЗАКРЫТ' }}
+                <span class="registry__id-badge">
+                  <span class="registry__id-prefix">LSSD-</span>{{ officer.idCard }}
+                </span>
+              </td>
+              <td>
+                <span class="registry__status" :class="officer.status === 'ACTIVE' ? 'registry__status--active' : 'registry__status--inactive'">
+                  <span class="registry__status-dot-sm"></span>
+                  {{ officer.status === 'ACTIVE' ? 'ДОСТУП РАЗРЕШЁН' : 'ДОСТУП ЗАКРЫТ' }}
                 </span>
               </td>
               <td>
                 <div class="registry__actions">
-                  <button class="registry__action-btn" @click="editOfficer(officer)" title="Редактировать">✏️</button>
-                  <button class="registry__action-btn" @click="toggleStatus(officer)" :title="officer.status === 'ACTIVE' ? 'Закрыть доступ' : 'Открыть доступ'">
-                    {{ officer.status === 'ACTIVE' ? '🔒' : '🔓' }}
+                  <button class="registry__action-btn" @click="editOfficer(officer)" title="Редактировать">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
                   </button>
-                  <button class="registry__action-btn" @click="deleteOfficer(officer.id)" title="Удалить">🗑️</button>
+                  <button
+                    class="registry__action-btn"
+                    :class="officer.status === 'ACTIVE' ? 'registry__action-btn--lock' : 'registry__action-btn--unlock'"
+                    @click="toggleStatus(officer)"
+                    :title="officer.status === 'ACTIVE' ? 'Закрыть доступ' : 'Открыть доступ'"
+                  >
+                    <svg v-if="officer.status === 'ACTIVE'" width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 11V7a5 5 0 019.9-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  </button>
+                  <button class="registry__action-btn registry__action-btn--delete" @click="deleteOfficer(officer.id)" title="Удалить">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.5"/></svg>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -76,45 +105,56 @@
       </div>
     </div>
 
-    <!-- Modal: Add/Edit Officer -->
+    <!-- Modal -->
     <Transition name="modal">
-      <div v-if="showAddOfficerModal" class="registry__modal-overlay" @click.self="showAddOfficerModal = false">
+      <div v-if="showModal" class="registry__overlay" @click.self="closeModal">
         <div class="registry__modal">
+
           <div class="registry__modal-header">
-            <h3>{{ editingOfficer ? 'Редактировать пропуск' : 'Оформить новый пропуск' }}</h3>
-            <button class="registry__modal-close" @click="showAddOfficerModal = false">×</button>
+            <div>
+              <p class="registry__modal-eyebrow">LSCSD · Реестр Пропусков</p>
+              <h3 class="registry__modal-title">
+                {{ editingOfficer ? 'Редактировать пропуск' : 'Оформить новый пропуск' }}
+              </h3>
+            </div>
+            <button class="registry__modal-close" @click="closeModal">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
           </div>
-          <form @submit.prevent="saveOfficer" class="registry__modal-form">
-            <div class="registry__form-grid">
-              <label class="registry__form-field">
-                <span>Имя</span>
-                <input v-model="officerForm.firstName" required class="registry__form-input" />
-              </label>
-              <label class="registry__form-field">
-                <span>Фамилия</span>
-                <input v-model="officerForm.lastName" required class="registry__form-input" />
-              </label>
-              <label class="registry__form-field">
-                <span>ID карта</span>
-                <div class="registry__id-input-group">
-                  <span class="registry__id-prefix-input">LSSD-</span>
-                  <input v-model="officerForm.idCard" required class="registry__id-input" placeholder="000000" maxlength="6" />
+
+          <form @submit.prevent="saveOfficer" class="registry__form">
+            <div class="registry__form-row">
+              <div class="registry__field">
+                <label class="registry__label">Имя</label>
+                <input v-model="officerForm.firstName" required class="registry__input" placeholder="John" />
+              </div>
+              <div class="registry__field">
+                <label class="registry__label">Фамилия</label>
+                <input v-model="officerForm.lastName" required class="registry__input" placeholder="Smith" />
+              </div>
+            </div>
+
+            <div class="registry__form-row">
+              <div class="registry__field">
+                <label class="registry__label">ID Пропуска</label>
+                <div class="registry__id-field">
+                  <span class="registry__id-pre">LSSD-</span>
+                  <input v-model="officerForm.idCard" required class="registry__id-inner" placeholder="000000" maxlength="6" />
                 </div>
-              </label>
-              <label class="registry__form-field">
-                <span>Статус доступа</span>
-                <select v-model="officerForm.status" required class="registry__form-select">
-                  <option value="ACTIVE">Доступ разрешен</option>
+              </div>
+              <div class="registry__field">
+                <label class="registry__label">Статус доступа</label>
+                <select v-model="officerForm.status" required class="registry__select">
+                  <option value="ACTIVE">Доступ разрешён</option>
                   <option value="INACTIVE">Доступ закрыт</option>
                 </select>
-              </label>
+              </div>
             </div>
-            <div class="registry__modal-actions">
-              <button type="button" class="registry__btn registry__btn--secondary" @click="showAddOfficerModal = false">
-                Отмена
-              </button>
+
+            <div class="registry__form-footer">
+              <button type="button" class="registry__btn registry__btn--ghost" @click="closeModal">Отмена</button>
               <button type="submit" class="registry__btn registry__btn--primary">
-                {{ editingOfficer ? 'Сохранить' : 'Оформить' }}
+                {{ editingOfficer ? 'Сохранить изменения' : 'Оформить пропуск' }}
               </button>
             </div>
           </form>
@@ -128,15 +168,38 @@
 import { ref, computed, onMounted } from 'vue'
 import { supabase } from '../supabase'
 
-const officers = ref([])
-const searchQuery = ref('')
-const officerForm = ref({ firstName: '', lastName: '', idCard: '', status: 'ACTIVE' })
-const showAddOfficerModal = ref(false)
+const officers      = ref([])
+const searchQuery   = ref('')
+const showModal     = ref(false)
 const editingOfficer = ref(null)
 
+const blankForm = () => ({ firstName: '', lastName: '', idCard: '', status: 'ACTIVE' })
+const officerForm = ref(blankForm())
+
 const loadData = async () => {
-  const { data } = await supabase.from('officers').select('*').order('createdAt', { ascending: false })
+  const { data } = await supabase
+    .from('officers')
+    .select('*')
+    .order('createdAt', { ascending: false })
   officers.value = data || []
+}
+
+const openAddModal = () => {
+  editingOfficer.value = null
+  officerForm.value = blankForm()
+  showModal.value = true
+}
+
+const editOfficer = (officer) => {
+  editingOfficer.value = officer
+  officerForm.value = { ...officer }
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  editingOfficer.value = null
+  officerForm.value = blankForm()
 }
 
 const saveOfficer = async () => {
@@ -145,14 +208,12 @@ const saveOfficer = async () => {
   } else {
     await supabase.from('officers').insert([officerForm.value])
   }
-  showAddOfficerModal.value = false
-  editingOfficer.value = null
-  officerForm.value = { firstName: '', lastName: '', idCard: '', status: 'ACTIVE' }
+  closeModal()
   loadData()
 }
 
 const deleteOfficer = async (id) => {
-  if (confirm('Удалить запись?')) {
+  if (confirm('Удалить запись из реестра?')) {
     await supabase.from('officers').delete().eq('id', id)
     loadData()
   }
@@ -168,9 +229,9 @@ const filteredOfficers = computed(() => {
   if (!searchQuery.value) return officers.value
   const q = searchQuery.value.toLowerCase()
   return officers.value.filter(o =>
-    o.firstName.toLowerCase().includes(q) ||
-    o.lastName.toLowerCase().includes(q) ||
-    (o.idCard && o.idCard.toLowerCase().includes(q))
+    o.firstName?.toLowerCase().includes(q) ||
+    o.lastName?.toLowerCase().includes(q) ||
+    o.idCard?.toLowerCase().includes(q)
   )
 })
 
@@ -180,29 +241,48 @@ onMounted(loadData)
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap');
 
+/* ─── Self-contained variables ───────────────────── */
 .registry {
+  --gold:        #c6a756;
+  --gold-light:  #f0cc7a;
+  --gold-dim:    #6b5828;
+  --navy:        #080f16;
+  --navy-mid:    #0e1a24;
+  --navy-light:  #152130;
+  --navy-card:   #111d28;
+  --white:       #f0ede8;
+  --muted:       rgba(240,237,232,0.5);
+  --border:      rgba(198,167,86,0.15);
+  --green:       #6ee89a;
+  --red:         #e04f4f;
+
+  font-family: 'Rajdhani', sans-serif;
   min-height: calc(100vh - 120px);
   background: var(--navy);
-  font-family: 'Rajdhani', sans-serif;
+  color: var(--white);
   position: relative;
-  padding: 40px 20px;
+  padding: 60px 40px 100px;
 }
 
+/* ─── Background grid ────────────────────────────── */
 .registry__grid {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  pointer-events: none;
   background-image:
-    linear-gradient(rgba(198,167,86,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(198,167,86,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(198,167,86,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(198,167,86,0.025) 1px, transparent 1px);
   background-size: 48px 48px;
-  animation: gridShift 20s linear infinite;
+  animation: gridShift 25s linear infinite;
+  z-index: 0;
 }
 
 @keyframes gridShift {
   from { background-position: 0 0; }
-  to { background-position: 48px 48px; }
+  to   { background-position: 48px 48px; }
 }
 
+/* ─── Container ──────────────────────────────────── */
 .registry__container {
   max-width: 1200px;
   margin: 0 auto;
@@ -210,115 +290,185 @@ onMounted(loadData)
   z-index: 1;
 }
 
+/* ─── Header ─────────────────────────────────────── */
 .registry__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
   margin-bottom: 40px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(198,167,86,0.2);
-  position: relative;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.registry__eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 2.5px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin: 0 0 6px;
 }
 
 .registry__title {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.5rem;
+  font-size: 2.8rem;
+  letter-spacing: 4px;
   color: var(--white);
   margin: 0;
-  letter-spacing: 3px;
+  line-height: 1;
 }
 
-.registry__subtitle {
-  color: var(--gold);
-  font-size: 0.9rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin: 5px 0 10px;
-}
-
-.registry__badge {
+.registry__status-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  background: rgba(110, 232, 154, 0.1);
-  border: 1px solid rgba(110, 232, 154, 0.3);
-  border-radius: 4px;
-  color: #6ee89a;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
+  padding: 8px 16px;
+  background: rgba(110,232,154,0.07);
+  border: 1px solid rgba(110,232,154,0.25);
+  border-radius: 2px;
+  color: var(--green);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.registry__badge-icon {
-  font-size: 0.7rem;
+.registry__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 2.4s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ─── Toolbar ────────────────────────────────────── */
 .registry__toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 20px;
 }
 
 .registry__btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 10px 22px;
   border: none;
-  border-radius: 4px;
+  border-radius: 2px;
   font-family: 'Rajdhani', sans-serif;
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+  flex-shrink: 0;
 }
 
 .registry__btn--primary {
   background: linear-gradient(135deg, var(--gold), #a8883e);
   color: var(--navy);
+  box-shadow: 0 4px 16px rgba(198,167,86,0.2);
 }
 
 .registry__btn--primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(198,167,86,0.3);
+  box-shadow: 0 6px 24px rgba(198,167,86,0.35);
 }
 
-.registry__btn--secondary {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(198,167,86,0.2);
+.registry__btn--ghost {
+  background: transparent;
   color: var(--white);
+  border: 1px solid var(--border);
 }
 
-.registry__btn--secondary:hover {
-  border-color: var(--gold);
+.registry__btn--ghost:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+  background: rgba(198,167,86,0.05);
 }
 
 .registry__search {
   flex: 1;
-  max-width: 400px;
+  max-width: 420px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.registry__search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .registry__search-input {
   width: 100%;
-  padding: 12px 16px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(198,167,86,0.2);
-  border-radius: 4px;
+  padding: 10px 36px 10px 36px;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 2px;
   color: var(--white);
   font-family: 'Rajdhani', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  transition: border-color 0.2s;
 }
 
-.registry__search-input:focus {
-  outline: none;
-  border-color: var(--gold);
+.registry__search-input::placeholder { color: var(--muted); }
+.registry__search-input:focus { outline: none; border-color: var(--gold); }
+
+.registry__search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s;
+}
+.registry__search-clear:hover { color: var(--gold); }
+
+.registry__count {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
 }
 
-.registry__table-container {
+.registry__count-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.registry__count-label {
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ─── Table ──────────────────────────────────────── */
+.registry__table-wrap {
   background: var(--navy-card);
-  border: 1px solid rgba(198,167,86,0.15);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
   overflow-x: auto;
 }
 
@@ -327,256 +477,338 @@ onMounted(loadData)
   border-collapse: collapse;
 }
 
-.registry__table th {
-  text-align: left;
-  padding: 16px;
-  background: rgba(0,0,0,0.3);
-  color: var(--gold);
-  font-weight: 600;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(198,167,86,0.2);
+.registry__table thead tr {
+  background: rgba(0,0,0,0.25);
+  border-bottom: 1px solid var(--border);
 }
+
+.registry__table th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.registry__table th:first-child { width: 48px; text-align: center; }
+
+.registry__row {
+  border-bottom: 1px solid rgba(198,167,86,0.07);
+  transition: background 0.15s;
+}
+
+.registry__row:last-child { border-bottom: none; }
+.registry__row:hover { background: rgba(198,167,86,0.04); }
 
 .registry__table td {
-  padding: 16px;
+  padding: 14px 18px;
+  font-size: 0.92rem;
   color: var(--white);
-  border-bottom: 1px solid rgba(198,167,86,0.1);
+  vertical-align: middle;
 }
 
-.registry__table tr:last-child td {
-  border-bottom: none;
+.registry__td-idx {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 1px;
 }
 
-.registry__table tr:hover td {
-  background: rgba(198,167,86,0.05);
+.registry__td-name {
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-.registry__id-card {
-  display: flex;
+/* ID badge */
+.registry__id-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-family: monospace;
-  font-size: 0.95rem;
+  gap: 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.88rem;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(198,167,86,0.2);
+  border-radius: 2px;
+  overflow: hidden;
 }
 
 .registry__id-prefix {
-  color: var(--gold);
-  font-weight: 600;
-}
-
-.registry__id-number {
-  color: var(--white);
-  letter-spacing: 1px;
-  background: rgba(0,0,0,0.3);
   padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(198,167,86,0.2);
+  background: rgba(198,167,86,0.1);
+  color: var(--gold);
+  font-weight: 700;
+  border-right: 1px solid rgba(198,167,86,0.2);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
 }
 
+.registry__id-badge > *:last-child {
+  padding: 4px 10px;
+  letter-spacing: 2px;
+}
+
+/* Status pill */
 .registry__status {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .registry__status--active {
-  background: rgba(110, 232, 154, 0.15);
-  border: 1px solid rgba(110, 232, 154, 0.3);
-  color: #6ee89a;
+  background: rgba(110,232,154,0.1);
+  border: 1px solid rgba(110,232,154,0.25);
+  color: var(--green);
 }
 
 .registry__status--inactive {
-  background: rgba(224, 79, 79, 0.15);
-  border: 1px solid rgba(224, 79, 79, 0.3);
-  color: #e04f4f;
+  background: rgba(224,79,79,0.1);
+  border: 1px solid rgba(224,79,79,0.25);
+  color: var(--red);
 }
 
+.registry__status-dot-sm {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.registry__status--active   .registry__status-dot-sm { background: var(--green); box-shadow: 0 0 5px var(--green); animation: blink 2.4s ease-in-out infinite; }
+.registry__status--inactive .registry__status-dot-sm { background: var(--red); }
+
+/* Action buttons */
 .registry__actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .registry__action-btn {
-  padding: 6px 10px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(198,167,86,0.2);
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(198,167,86,0.15);
+  border-radius: 2px;
   color: var(--muted);
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 1rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .registry__action-btn:hover {
-  border-color: var(--gold);
-  color: var(--gold);
   background: rgba(198,167,86,0.1);
+  border-color: var(--gold-dim);
+  color: var(--gold);
 }
 
-/* Modal Styles */
-.registry__modal-overlay {
+.registry__action-btn--lock:hover {
+  background: rgba(224,79,79,0.1);
+  border-color: rgba(224,79,79,0.4);
+  color: var(--red);
+}
+
+.registry__action-btn--unlock:hover {
+  background: rgba(110,232,154,0.1);
+  border-color: rgba(110,232,154,0.4);
+  color: var(--green);
+}
+
+.registry__action-btn--delete:hover {
+  background: rgba(224,79,79,0.1);
+  border-color: rgba(224,79,79,0.4);
+  color: var(--red);
+}
+
+/* Empty state */
+.registry__empty {
+  text-align: center !important;
+  padding: 70px 20px !important;
+}
+
+.registry__empty-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.registry__empty-inner p { margin: 0; }
+
+/* ─── Modal ──────────────────────────────────────── */
+.registry__overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(4px);
+  inset: 0;
+  background: rgba(4,9,15,0.85);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  padding: 20px;
 }
 
 .registry__modal {
-  width: 500px;
-  max-width: 90vw;
+  width: 520px;
+  max-width: 100%;
   background: var(--navy-mid);
   border: 1px solid var(--gold);
-  border-radius: 8px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  border-radius: 3px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(198,167,86,0.05);
+  overflow: hidden;
 }
 
 .registry__modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid rgba(198,167,86,0.2);
+  align-items: flex-start;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.2);
 }
 
-.registry__modal-header h3 {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.5rem;
+.registry__modal-eyebrow {
+  font-size: 0.65rem;
+  letter-spacing: 2.5px;
   color: var(--gold);
+  text-transform: uppercase;
+  margin: 0 0 5px;
+}
+
+.registry__modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  color: var(--white);
   margin: 0;
-  letter-spacing: 1px;
 }
 
 .registry__modal-close {
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 2rem;
   cursor: pointer;
-  line-height: 1;
+  padding: 4px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s, background 0.2s;
 }
 
-.registry__modal-close:hover {
-  color: var(--gold);
-}
+.registry__modal-close:hover { color: var(--gold); background: rgba(198,167,86,0.08); }
 
-.registry__modal-form {
-  padding: 20px;
-}
+/* Form */
+.registry__form { padding: 24px 28px; }
 
-.registry__form-grid {
+.registry__form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.registry__form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.registry__field { display: flex; flex-direction: column; gap: 7px; }
 
-.registry__form-field span {
+.registry__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.8px;
   color: var(--muted);
-  font-size: 0.8rem;
-  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-.registry__form-input,
-.registry__form-select {
-  padding: 10px;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(198,167,86,0.2);
-  border-radius: 4px;
+.registry__input,
+.registry__select {
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(198,167,86,0.18);
+  border-radius: 2px;
   color: var(--white);
   font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
 }
 
-.registry__form-input:focus,
-.registry__form-select:focus {
-  outline: none;
-  border-color: var(--gold);
-}
+.registry__input::placeholder { color: rgba(240,237,232,0.25); }
+.registry__input:focus,
+.registry__select:focus { outline: none; border-color: var(--gold); }
 
-.registry__id-input-group {
+.registry__select { cursor: pointer; }
+.registry__select option { background: var(--navy-mid); }
+
+.registry__id-field {
   display: flex;
-  align-items: center;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(198,167,86,0.2);
-  border-radius: 4px;
   overflow: hidden;
+  border: 1px solid rgba(198,167,86,0.18);
+  border-radius: 2px;
+  background: rgba(0,0,0,0.35);
+  transition: border-color 0.2s;
 }
 
-.registry__id-prefix-input {
+.registry__id-field:focus-within { border-color: var(--gold); }
+
+.registry__id-pre {
   padding: 10px 12px;
-  background: rgba(198,167,86,0.1);
+  background: rgba(198,167,86,0.08);
   color: var(--gold);
-  font-weight: 600;
-  border-right: 1px solid rgba(198,167,86,0.2);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  border-right: 1px solid rgba(198,167,86,0.18);
+  flex-shrink: 0;
 }
 
-.registry__id-input {
+.registry__id-inner {
   flex: 1;
-  padding: 10px;
+  padding: 10px 12px;
   background: none;
   border: none;
   color: var(--white);
-  font-family: monospace;
+  font-family: 'Courier New', monospace;
   font-size: 1rem;
+  letter-spacing: 3px;
 }
 
-.registry__id-input:focus {
-  outline: none;
-}
+.registry__id-inner:focus { outline: none; }
+.registry__id-inner::placeholder { letter-spacing: 1px; color: rgba(240,237,232,0.2); font-family: 'Rajdhani', sans-serif; }
 
-.registry__modal-actions {
+.registry__form-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
 
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.3s ease;
-}
+/* ─── Modal transition ───────────────────────────── */
+.modal-enter-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.modal-leave-active { transition: opacity 0.2s ease,  transform 0.2s ease; }
+.modal-enter-from   { opacity: 0; transform: scale(0.97) translateY(8px); }
+.modal-leave-to     { opacity: 0; transform: scale(0.97) translateY(8px); }
 
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
+/* ─── Responsive ─────────────────────────────────── */
 @media (max-width: 768px) {
-  .registry__toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .registry__search {
-    max-width: 100%;
-  }
-  
-  .registry__form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .registry__table th:nth-child(3),
-  .registry__table td:nth-child(3) {
-    font-size: 0.85rem;
-  }
+  .registry { padding: 40px 20px 80px; }
+  .registry__header { flex-direction: column; align-items: flex-start; }
+  .registry__toolbar { flex-direction: column; align-items: stretch; }
+  .registry__search { max-width: 100%; }
+  .registry__count { margin-left: 0; }
+  .registry__form-row { grid-template-columns: 1fr; }
+  .registry__table th:nth-child(1),
+  .registry__table td:nth-child(1) { display: none; }
 }
 </style>
